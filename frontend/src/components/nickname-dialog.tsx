@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useBoardStore } from "../hooks/use-board-store";
+import { generateId } from "../utils/id";
 
 const COLORS = ["#ef4444", "#3b82f6", "#10b981", "#f59e0b", "#78716c"];
 
@@ -15,7 +16,7 @@ export default function NicknameDialog() {
     if (!name.trim()) return;
 
     setCurrentUser({
-      id: crypto.randomUUID(),
+      id: generateId(),
       username: name.trim(),
       color: selectedColor,
     });

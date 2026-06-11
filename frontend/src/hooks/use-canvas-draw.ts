@@ -2,6 +2,7 @@ import { useState, useRef, MouseEvent } from "react";
 import { useBoardStore } from "./use-board-store";
 import { DrawingElement, Point } from "../types/board";
 import { getElementAtPosition } from "../utils/hit-test";
+import { generateId } from "../utils/id";
 
 export function useCanvasDraw(sendWS: (msg: any) => void) {
   const {
@@ -53,7 +54,7 @@ export function useCanvasDraw(sendWS: (msg: any) => void) {
     }
 
     const newEl: DrawingElement = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       type: selectedTool === "rectangle" ? "rectangle" : "pencil",
       x: pt.x,
       y: pt.y,

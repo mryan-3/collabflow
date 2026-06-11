@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, ArrowRight } from "@phosphor-icons/react";
+import { generateId } from "../utils/id";
 
 export default function Home() {
   const router = useRouter();
   const [boardId, setBoardId] = useState("");
 
   const handleCreate = () => {
-    const newId = crypto.randomUUID();
+    const newId = generateId();
     router.push(`/board/${newId}`);
   };
 

@@ -56,17 +56,21 @@ const server = http.createServer((req, res) => {
 const wss = new WebSocketServer({ noServer: true });
 
 server.on("upgrade", (req, socket, head) => {
+  console.log("Upgrade request received for URL:", req.url);
   const { query } = parse(req.url || "", true);
+  console.log("Parsed query parameters:", query);
   const boardId = query.boardId as string;
   const userId = query.userId as string;
   const username = query.username as string;
 
   if (!boardId || !userId || !username) {
+    console.log("Validation failed: missing boardId, userId, or username.");
     socket.write("HTTP/1.1 400 Bad Request\r\n\r\n");
     socket.destroy();
     return;
   }
 
+  console.log("Validation passed, handling upgrade...");
   wss.handleUpgrade(req, socket, head, (ws) => {
     wss.emit("connection", ws, req);
   });
@@ -86,6 +90,7 @@ const broadcastToRoom = (boardId: string, message: WSMessage, excludeUserId?: st
 };
 
 wss.on("connection", (ws: WebSocket, req) => {
+  console.log("WebSocket connection handshake completed successfully!");
   const { query } = parse(req.url || "", true);
   const boardId = query.boardId as string;
   const userId = query.userId as string;

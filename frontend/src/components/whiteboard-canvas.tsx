@@ -5,6 +5,7 @@ import { useBoardStore } from "../hooks/use-board-store";
 import { useCanvasDraw } from "../hooks/use-canvas-draw";
 import { drawGrid, drawElements } from "../utils/canvas-renderer";
 import { DrawingElement } from "../types/board";
+import { generateId } from "../utils/id";
 
 interface CanvasProps {
   sendWS: (msg: any) => void;
@@ -43,7 +44,7 @@ export default function WhiteboardCanvas({ sendWS }: CanvasProps) {
     const val = (e.currentTarget as HTMLInputElement).value.trim();
     if (val && currentUser) {
       const newEl: DrawingElement = {
-        id: crypto.randomUUID(),
+        id: generateId(),
         type: "text",
         x: textInput.x,
         y: textInput.y,
@@ -55,10 +56,7 @@ export default function WhiteboardCanvas({ sendWS }: CanvasProps) {
       };
       useBoardStore.getState().updateLocalElement(newEl);
       sendWS({ type: "element_update", payload: newEl });
-      useBoardStore.setState((s) => ({
-        myCreatedIds: [...s.myCreatedIds, newEl.id],
-        myRedoStack: [],
-      }));
+      useBoardStore.setState((s) => ({ myCreatedIds: [...s.myCreatedIds, newEl.id], myRedoStack: [] }));
     }
     setTextInput(null);
     setSelectedTool("select");
