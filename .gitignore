@@ -1,1 +1,7 @@
 prd.md
+node_modules/
+dist/
+.next/
+backend/data/
+.DS_Store
+*.local
