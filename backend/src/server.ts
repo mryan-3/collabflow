@@ -2,7 +2,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import * as http from "http";
 import * as fs from "fs";
 import * as path from "path";
-import { parse } from "url";
+import { URL } from "url";
 import { WSMessage, DrawingElement, UserPresence, Point } from "./types";
 
 const PORT = process.env.PORT || 8080;
@@ -56,21 +56,17 @@ const server = http.createServer((req, res) => {
 const wss = new WebSocketServer({ noServer: true });
 
 server.on("upgrade", (req, socket, head) => {
-  console.log("Upgrade request received for URL:", req.url);
-  const { query } = parse(req.url || "", true);
-  console.log("Parsed query parameters:", query);
-  const boardId = query.boardId as string;
-  const userId = query.userId as string;
-  const username = query.username as string;
+  const query = new URL(req.url || "", `http://${req.headers.host}`).searchParams;
+  const boardId = query.get("boardId") as string;
+  const userId = query.get("userId") as string;
+  const username = query.get("username") as string;
 
   if (!boardId || !userId || !username) {
-    console.log("Validation failed: missing boardId, userId, or username.");
     socket.write("HTTP/1.1 400 Bad Request\r\n\r\n");
     socket.destroy();
     return;
   }
 
-  console.log("Validation passed, handling upgrade...");
   wss.handleUpgrade(req, socket, head, (ws) => {
     wss.emit("connection", ws, req);
   });
@@ -90,18 +86,25 @@ const broadcastToRoom = (boardId: string, message: WSMessage, excludeUserId?: st
 };
 
 wss.on("connection", (ws: WebSocket, req) => {
-  console.log("WebSocket connection handshake completed successfully!");
-  const { query } = parse(req.url || "", true);
-  const boardId = query.boardId as string;
-  const userId = query.userId as string;
-  const username = query.username as string;
-  const color = (query.color as string) || "#000000";
+  const hostHeader = req.headers.host || "localhost";
+  const query = new URL(req.url || "", `http://${hostHeader}`).searchParams;
+  const boardId = query.get("boardId") as string;
+  const userId = query.get("userId") as string;
+  const username = query.get("username") as string;
+  const color = (query.get("color") as string) || "#000000";
+
+  console.log(`Connection established for boardId: ${boardId}, userId: ${userId}, username: ${username}`);
 
   // Initialize room if not exists
   if (!rooms.has(boardId)) {
+    console.log(`Initializing room state for board: ${boardId}`);
     const loadedElements = loadBoardState(boardId);
     const elementMap = new Map<string, DrawingElement>();
-    loadedElements.forEach((el) => elementMap.set(el.id, el));
+    loadedElements.forEach((el) => {
+      if (el && el.id) {
+        elementMap.set(el.id, el);
+      }
+    });
 
     rooms.set(boardId, {
       elements: elementMap,
@@ -111,7 +114,7 @@ wss.on("connection", (ws: WebSocket, req) => {
   }
 
   const room = rooms.get(boardId)!;
-  
+
   // Create user presence
   const newUserPresence: UserPresence = {
     id: userId,
@@ -182,7 +185,8 @@ wss.on("connection", (ws: WebSocket, req) => {
     }
   });
 
-  ws.on("close", () => {
+  ws.on("close", (code, reason) => {
+    console.log(`Socket closed for user ${username} in room ${boardId}. Code: ${code}, Reason: ${reason.toString()}`);
     room.users.delete(userId);
     room.clients.delete(userId);
 
@@ -190,6 +194,7 @@ wss.on("connection", (ws: WebSocket, req) => {
 
     // Clean up room if completely empty
     if (room.clients.size === 0) {
+      console.log(`Cleaning up empty room ${boardId}`);
       rooms.delete(boardId);
     }
   });

@@ -33,29 +33,34 @@ export function useCanvasDraw(sendWS: (msg: any) => void) {
   };
 
   const handleMouseDown = (e: MouseEvent<HTMLCanvasElement>) => {
-    if (e.button === 1 || selectedTool === "select") {
+    if (e.button === 1 || selectedTool === "hand") {
+      setAction("panning");
+      startPan.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
+      return;
+    }
+
+    if (selectedTool === "select") {
       const pt = getAbsCoords(e);
       const hit = getElementAtPosition(elements, pt);
       if (hit && e.button !== 1) {
         setAction("moving");
         setActiveElement(hit);
         elementOffset.current = { x: pt.x - hit.x, y: pt.y - hit.y };
-      } else {
-        setAction("panning");
-        startPan.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
       }
       return;
     }
 
     const pt = getAbsCoords(e);
     if (selectedTool === "text") {
+      if (textInput) return;
+      e.preventDefault();
       setTextInput({ x: pt.x, y: pt.y, val: "" });
       return;
     }
 
     const newEl: DrawingElement = {
       id: generateId(),
-      type: selectedTool === "rectangle" ? "rectangle" : "pencil",
+      type: selectedTool as "pencil" | "rectangle" | "circle" | "line",
       x: pt.x,
       y: pt.y,
       width: 0,

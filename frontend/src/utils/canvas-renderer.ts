@@ -52,6 +52,16 @@ export function drawElements(
       ctx.stroke();
     } else if (el.type === "rectangle") {
       ctx.strokeRect(el.x, el.y, el.width, el.height);
+    } else if (el.type === "circle") {
+      ctx.beginPath();
+      const radius = Math.sqrt(el.width * el.width + el.height * el.height);
+      ctx.arc(el.x, el.y, radius, 0, 2 * Math.PI);
+      ctx.stroke();
+    } else if (el.type === "line") {
+      ctx.beginPath();
+      ctx.moveTo(el.x, el.y);
+      ctx.lineTo(el.x + el.width, el.y + el.height);
+      ctx.stroke();
     } else if (el.type === "text" && el.text) {
       ctx.font = "16px var(--font-space-grotesk), sans-serif";
       ctx.fillText(el.text, el.x, el.y + 16);

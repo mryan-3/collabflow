@@ -1,17 +1,13 @@
 "use client";
-
-import { useEffect, useRef, KeyboardEvent, FocusEvent } from "react";
+import { useEffect, useRef } from "react";
 import { useBoardStore } from "../hooks/use-board-store";
 import { useCanvasDraw } from "../hooks/use-canvas-draw";
 import { drawGrid, drawElements } from "../utils/canvas-renderer";
 import { DrawingElement } from "../types/board";
 import { generateId } from "../utils/id";
+import { TextInputOverlay } from "./text-input-overlay";
 
-interface CanvasProps {
-  sendWS: (msg: any) => void;
-}
-
-export default function WhiteboardCanvas({ sendWS }: CanvasProps) {
+export default function WhiteboardCanvas({ sendWS }: { sendWS: (msg: any) => void }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { elements, zoom, pan, currentUser, setSelectedTool } = useBoardStore();
@@ -31,35 +27,28 @@ export default function WhiteboardCanvas({ sendWS }: CanvasProps) {
   }, [zoom, pan, elements]);
 
   const draw = () => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
+    const canvas = canvasRef.current, ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawGrid(ctx, canvas.width, canvas.height, zoom, pan);
     drawElements(ctx, elements, zoom, pan);
   };
 
-  const handleTextSubmit = (e: KeyboardEvent<HTMLInputElement> | FocusEvent<HTMLInputElement>) => {
+  const handleTextSubmit = (val: string) => {
     if (!textInput) return;
-    const val = (e.currentTarget as HTMLInputElement).value.trim();
-    if (val && currentUser) {
+    const trimmed = val.trim();
+    if (trimmed && currentUser) {
       const newEl: DrawingElement = {
-        id: generateId(),
-        type: "text",
-        x: textInput.x,
-        y: textInput.y,
-        width: val.length * 9,
-        height: 24,
-        color: useBoardStore.getState().selectedColor,
-        text: val,
-        createdBy: currentUser.id,
+        id: generateId(), type: "text", x: textInput.x, y: textInput.y,
+        width: trimmed.length * 9, height: 24, text: trimmed,
+        color: useBoardStore.getState().selectedColor, createdBy: currentUser.id,
       };
       useBoardStore.getState().updateLocalElement(newEl);
       sendWS({ type: "element_update", payload: newEl });
       useBoardStore.setState((s) => ({ myCreatedIds: [...s.myCreatedIds, newEl.id], myRedoStack: [] }));
     }
     setTextInput(null);
-    setSelectedTool("select");
+    if (useBoardStore.getState().selectedTool === "text") setSelectedTool("select");
   };
 
   return (
@@ -72,14 +61,12 @@ export default function WhiteboardCanvas({ sendWS }: CanvasProps) {
         className="block w-full h-full"
       />
       {textInput && (
-        <input
-          autoFocus
-          className="absolute bg-white border border-stone-300 rounded px-1.5 py-0.5 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-zinc-950 shadow-sm"
-          style={{ left: textInput.x * zoom + pan.x, top: textInput.y * zoom + pan.y }}
-          onKeyDown={(e) => e.key === "Enter" ? handleTextSubmit(e) : e.key === "Escape" ? setTextInput(null) : null}
-          onBlur={handleTextSubmit}
+        <TextInputOverlay
+          x={textInput.x} y={textInput.y} zoom={zoom} pan={pan}
+          onSubmit={handleTextSubmit} onCancel={() => setTextInput(null)}
         />
       )}
     </div>
   );
 }
+

@@ -5,7 +5,7 @@ export interface Point {
 
 export interface DrawingElement {
   id: string;
-  type: "pencil" | "rectangle" | "text";
+  type: "pencil" | "rectangle" | "circle" | "line" | "text";
   x: number;
   y: number;
   width: number;

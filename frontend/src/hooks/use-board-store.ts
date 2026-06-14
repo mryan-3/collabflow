@@ -5,7 +5,7 @@ interface BoardState {
   elements: DrawingElement[];
   users: UserPresence[];
   currentUser: UserPresence | null;
-  selectedTool: "select" | "pencil" | "rectangle" | "text";
+  selectedTool: "select" | "hand" | "pencil" | "rectangle" | "circle" | "line" | "text";
   selectedColor: string;
   zoom: number;
   pan: Point;

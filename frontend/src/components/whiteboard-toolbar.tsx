@@ -3,8 +3,11 @@
 import { useBoardStore } from "../hooks/use-board-store";
 import {
   Cursor,
+  HandGrabbing,
   PencilSimple,
   Square,
+  Circle,
+  LineSegment,
   TextT,
   ArrowCounterClockwise,
   ArrowClockwise,
@@ -35,8 +38,11 @@ export default function WhiteboardToolbar({
       <div className="flex flex-col gap-1.5 border-b border-stone-100 pb-3">
         {[
           { id: "select", icon: Cursor, label: "Select" },
+          { id: "hand", icon: HandGrabbing, label: "Hand" },
           { id: "pencil", icon: PencilSimple, label: "Pencil" },
           { id: "rectangle", icon: Square, label: "Rectangle" },
+          { id: "circle", icon: Circle, label: "Circle" },
+          { id: "line", icon: LineSegment, label: "Line" },
           { id: "text", icon: TextT, label: "Text" },
         ].map((tool) => {
           const Icon = tool.icon;
